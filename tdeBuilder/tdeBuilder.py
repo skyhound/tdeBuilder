@@ -2,49 +2,51 @@ from tableausdk import Types as tde
 from tableausdk import Extract as tdeEx
 from tableausdk import Server as tdeS
 from tableausdk import Exceptions as tdeE
-import sys,getopt
+import sys
+import getopt
 import csv
-import time
 import datetime
-import locale
 import json
 import os
-import pdb    
 import glob
 import base64
 import math
 import re
-import pyodbc            
-class parameter(object):
+import pyodbc
 
-    def __init__(self,inName,inDefault,setValue=""):
-        self.name=inName;
-        self.default=inDefault;
-        self.setValue=setValue;
-        if self.setValue=="":
-            self.endValue=self.default
+
+class Parameter(object):
+    def __init__(self, in_name, in_default, set_value=""):
+        self.name = in_name
+        self.default = in_default
+        self.setValue = set_value
+        if self.setValue == "":
+            self.endValue = self.default
         else:
-            self.endValue=self.setValue
-    def getValue(self):
+            self.endValue = self.setValue
+
+    def get_value(self):
         return self.endValue
-    def getName(self):
+
+    def get_name(self):
         return self.name
 
     @classmethod
-    def fromjson(cls,inDict,inSetValue=""):
-        name= inDict.keys()[0]
-        default=inDict[name]["default"]
-        setValue=inSetValue
-        return cls(name,default,setValue)
+    def fromjson(cls, in_dict, in_set_value=""):
+        name = in_dict.keys()[0]
+        default = in_dict[name]["default"]
+        return cls(name, default, in_set_value)
 
-class configValue(object):
-    def __init__(self,stringIn,listParams):
-        self.value=stringIn
-        for param in listParams:
-            reg= re.compile("\$\("+param.name+"\)")
-            self.value= reg.sub(param.getValue(),self.value)
-    def getValue(self):
-        return self.value;
+
+class ConfigValue(object):
+    def __init__(self, string_in, list_params):
+        self.value = string_in
+        for param in list_params:
+            reg = re.compile("\$\("+param.name+"\)")
+            self.value = reg.sub(param.get_value(), self.value)
+
+    def get_value(self):
+        return self.value
 
 def encodeWordOrg(key, clear):
     enc = []
@@ -131,24 +133,24 @@ class odbc_info(source_info):
     def __init__(self,jsonIn,parms):
         source_info.__init__(self,jsonIn)
         if "dsn" in jsonIn.keys():
-            self.dsn=configValue(jsonIn["dsn"],parms).getValue()
-            self.uid=configValue(jsonIn["uid"],parms).getValue()
-            self.password=configValue(jsonIn["password"],parms).getValue()
+            self.dsn=ConfigValue(jsonIn["dsn"], parms).get_value()
+            self.uid=ConfigValue(jsonIn["uid"], parms).get_value()
+            self.password=ConfigValue(jsonIn["password"], parms).get_value()
             self.conn=pyodbc.connect('DSN=%s;UID=%s;PWD=%s'%(self.dsn,self.user,self.password),readonly=True,unicode_results=True)
         else:
-            self.server=configValue(jsonIn["server"],parms).getValue()
+            self.server=ConfigValue(jsonIn["server"], parms).get_value()
             
-            self.user=configValue(jsonIn["uid"],parms).getValue()
-            self.password=configValue(jsonIn["password"],parms).getValue()
-            self.driver=configValue(jsonIn["driver"],parms).getValue()
+            self.user=ConfigValue(jsonIn["uid"], parms).get_value()
+            self.password=ConfigValue(jsonIn["password"], parms).get_value()
+            self.driver=ConfigValue(jsonIn["driver"], parms).get_value()
             print "driver:",self.driver
-            self.port=configValue(jsonIn["port"],parms).getValue()
-            self.database=configValue(jsonIn["database"],parms).getValue()
+            self.port=ConfigValue(jsonIn["port"], parms).get_value()
+            self.database=ConfigValue(jsonIn["database"], parms).get_value()
             conString="DRIVER={%s};SERVER=%s,%s;DATABASE=%s;UID=%s;PWD=%s"%(self.driver,self.server,self.port,self.database,self.user,self.password)
             print "con:",conString
             self.conn=pyodbc.connect(conString,readonly=True,unicode_results=True)
             
-        self.sql=configValue(jsonIn["sql"],parms).getValue()
+        self.sql=ConfigValue(jsonIn["sql"], parms).get_value()
         self.cursor=self.conn.cursor()
         #self.setTotalRows()
         self.totalRows=self.setTotalRows()
@@ -209,10 +211,10 @@ class file_info(source_info):
         self.input_filenames=[]
         self.delimiter=''
         self.column_headers=""
-        self.setInputType(configValue(jsonIn["input_type"],parameters).getValue())
-        self.setColumnHeader(configValue(jsonIn["column_headers"],parameters).getValue())
-        self.setDelimiter(configValue(jsonIn["delimiter"],parameters).getValue())
-        self.setInputFileName(configValue(jsonIn["input_file_name"],parameters).getValue())
+        self.setInputType(ConfigValue(jsonIn["input_type"], parameters).get_value())
+        self.setColumnHeader(ConfigValue(jsonIn["column_headers"], parameters).get_value())
+        self.setDelimiter(ConfigValue(jsonIn["delimiter"], parameters).get_value())
+        self.setInputFileName(ConfigValue(jsonIn["input_file_name"], parameters).get_value())
         self.totalRows=self.setTotalRows() 
         print "Totalrows:",self.totalRows
         
@@ -260,7 +262,7 @@ class file_info(source_info):
             else :
                 i=0
                 for column in tdeSettingsIn.columns:
-                    columnIndex[column]=configValue(i,self.parameters).getValue()
+                    columnIndex[column]=ConfigValue(i, self.parameters).get_value()
                     i+=1
         return columnIndex
 
@@ -304,7 +306,7 @@ class inputConfig(object):
         else:
             self.fileInformation=odbc_info(jsonIn["sql_info"],paramsIn)
     def setType(self,jsonIn):
-        myType=configValue(jsonIn["type"],self.params).getValue()
+        myType=ConfigValue(jsonIn["type"], self.params).get_value()
         if myType not in self.TYPES.values():
             raise ValueError('Data Type does not exist')
         else:
@@ -338,21 +340,22 @@ class tdeSettings(object):
             parametersDict=inDict["parameters"]
             for key in parametersDict.keys():
                 if key in parmFlags.keys():
-                    tmpParam=parameter(key,parametersDict[key]["default"],parmFlags[key]) #laster arugment is param from command line: Name, default, value
+                    tmpParam=Parameter(key, parametersDict[key]["default"], parmFlags[key]) #laster arugment is param from command line: Name, default, value
                 else:
-                    tmpParam=parameter(key,parametersDict[key]["default"],"") #laster arugment is param from command line: Name, default, value
+                    tmpParam=Parameter(key, parametersDict[key]["default"], "") #laster arugment is param from command line: Name, default, value
 
                 self.parameters.append(tmpParam)
-        self.tde_file=configValue(inDict["tde_filename"],self.parameters).getValue()
+        self.tde_file=ConfigValue(inDict["tde_filename"], self.parameters).get_value()
         
         self.columnIndex={} #columns and their indexes
         self.serverUpload=False
         if "server_upload" in inDict.keys():
-            self.server_address=configValue(inDict["server_upload"]["server_address"],self.parameters).getValue()
-            self.server_login=configValue(inDict["server_upload"]["server_login"],self.parameters).getValue()
-            self.server_password=inDict["server_upload"]["server_password_encoded"] 
-            self.project=configValue(inDict["server_upload"]["project"],self.parameters).getValue()
-            self.serverUpload=True
+            self.server_address = ConfigValue(inDict["server_upload"]["server_address"], self.parameters).get_value()
+            self.server_login = ConfigValue(inDict["server_upload"]["server_login"], self.parameters).get_value()
+            self.server_password = inDict["server_upload"]["server_password_encoded"]
+            self.project = ConfigValue(inDict["server_upload"]["project"], self.parameters).get_value()
+            self.site = ConfigValue(inDict["server_upload"]["site"], self.parameters).get_value()
+            self.serverUpload = True
 
         self.inputInfo=inputConfig(inDict["input"],self.parameters)
         self.setColumns(inDict["columns"])
@@ -487,7 +490,8 @@ class builder(object):
             tdeS.ServerAPI.initialize()
             conn=tdeS.ServerConnection()
             password=decodeWord(self.tde_settings_ins.server_password)            
-            conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password,"")
+            # conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, "nekkianalytics")
+            conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, self.tde_settings_ins.site)
             conn.publishExtract(self.tde_settings_ins.tde_file,self.tde_settings_ins.project,os.path.basename(self.tde_settings_ins.tde_file),True)
             conn.close()
             tdeS.ServerAPI.cleanup()
