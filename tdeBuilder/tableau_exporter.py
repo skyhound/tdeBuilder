@@ -8,5 +8,5 @@ def publish_tde(server, login, password, site, full_local_path, project_name, ds
     print full_local_path
     print ds_name
     print project_name
-    connection.publish_datasource(unicode(full_local_path), unicode(ds_name), project_obj)
+    connection.publish_datasource(unicode(full_local_path), unicode(ds_name), project_obj, overwrite=True)
 
