@@ -1,19 +1,19 @@
-from tableausdk import Types as tde
-from tableausdk import Extract as tdeEx
-from tableausdk import Server as tdeS
-from tableausdk import Exceptions as tdeE
-import sys
-import getopt
+import base64
 import csv
 import datetime
-import json
-import os
+import getopt
 import glob
-import base64
+import json
 import math
-import re
+import os
 import pyodbc
+import re
+import sys
 
+from tableausdk import Exceptions as tdeE
+from tableausdk import Extract as tdeEx
+from tableausdk import Server as tdeS
+from tableausdk import Types as tde
 import tableau_exporter
 
 
