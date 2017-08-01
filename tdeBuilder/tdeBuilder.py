@@ -461,7 +461,7 @@ class builder(object):
                         #valueDecoded=myReaderRow[index].decode(self.tde_settings_ins.inputInfo.fileInformation.encodeing)
                         self.fieldSetterMap[tdeSettings.schemaIniTypeMap[self.tde_settings_ins.columns[columnName]]](putRow, outputColIndex[columnName], myReaderRow[index]);
                     except:
-                        print "column name", columnName, "contians invalid data"
+                        print "column name", columnName, "contains invalid data"
                         print "value: ",myReaderRow[index] 
                         print sys.exc_info()[0]
                         raise
@@ -486,47 +486,48 @@ class builder(object):
         diff=endTime - startTime 
         print "Build elapsed time:", diff
     def push(self):
-        try:
-            tdeS.ServerAPI.initialize()
-            conn=tdeS.ServerConnection()
-            password=decodeWord(self.tde_settings_ins.server_password)            
-            # conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, "nekkianalytics")
-            conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, self.tde_settings_ins.site)
-            conn.publishExtract(self.tde_settings_ins.tde_file,self.tde_settings_ins.project,os.path.basename(self.tde_settings_ins.tde_file),True)
-            conn.close()
-            tdeS.ServerAPI.cleanup()
-            print "Uploaded to server:",self.tde_settings_ins.server_address
+        # try:
+        tdeS.ServerAPI.initialize()
+        conn=tdeS.ServerConnection()
+        password=decodeWord(self.tde_settings_ins.server_password)
+        # conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, "nekkianalytics")
+        conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, self.tde_settings_ins.site)
+        conn.publishExtract(self.tde_settings_ins.tde_file,self.tde_settings_ins.project,os.path.basename(self.tde_settings_ins.tde_file),True)
+        conn.close()
+        tdeS.ServerAPI.cleanup()
+        print "Uploaded to server:",self.tde_settings_ins.server_address
             
-        except tdeE.TableauException, e:
-            # Handle the exception depending on the type of exception received
+        # except tdeE.TableauException, e:
+        #     # Handle the exception depending on the type of exception received
+#
+        #     errorMessage = "Error: "
+#
+        #     if e.errorCode == tde.Result.INTERNAL_ERROR:
+        #         errorMessage += "INTERNAL_ERROR - Could not parse the response from the server."
+#
+        #     elif e.errorCode == tde.Result.INVALID_ARGUMENT:
+        #         errorMessage += "INVALID_ARGUMENT - " + e.message
+#
+        #     elif e.errorCode == tde.Result.CURL_ERROR:
+        #         errorMessage += "CURL_ERROR - " + e.message
+#
+        #     elif e.errorCode == tde.Result.SERVER_ERROR:
+        #         errorMessage += "SERVER_ERROR - " + e.message
+#
+        #     elif e.errorCode == tde.Result.NOT_AUTHENTICATED:
+        #         errorMessage += "NOT_AUTHENTICATED - " + e.message
+#
+        #     elif e.errorCode == tde.Result.BAD_PAYLOAD:
+        #         errorMessage += "BAD_PAYLOAD - Unknown response from the server. Make sure this version of Tableau API is compatible with your server."
+#
+        #     elif e.errorCode == tde.Result.INIT_ERROR:
+        #         errorMessage += "INIT_ERROR - " + e.message
+#
+        #     else:
+        #         errorMessage += "An unknown error occured."
+#
+        #     print errorMessage
 
-            errorMessage = "Error: "
-
-            if e.errorCode == tde.Result.INTERNAL_ERROR:
-                errorMessage += "INTERNAL_ERROR - Could not parse the response from the server."
-
-            elif e.errorCode == tde.Result.INVALID_ARGUMENT:
-                errorMessage += "INVALID_ARGUMENT - " + e.message
-
-            elif e.errorCode == tde.Result.CURL_ERROR:
-                errorMessage += "CURL_ERROR - " + e.message
-
-            elif e.errorCode == tde.Result.SERVER_ERROR:
-                errorMessage += "SERVER_ERROR - " + e.message
-
-            elif e.errorCode == tde.Result.NOT_AUTHENTICATED:
-                errorMessage += "NOT_AUTHENTICATED - " + e.message
-
-            elif e.errorCode == tde.Result.BAD_PAYLOAD:
-                errorMessage += "BAD_PAYLOAD - Unknown response from the server. Make sure this version of Tableau API is compatible with your server."
-
-            elif e.errorCode == tde.Result.INIT_ERROR:
-                errorMessage += "INIT_ERROR - " + e.message
-
-            else:
-                errorMessage += "An unknown error occured."
-
-            print errorMessage
 
         
 
