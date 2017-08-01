@@ -14,6 +14,8 @@ import math
 import re
 import pyodbc
 
+import tableau_exporter
+
 
 class Parameter(object):
     def __init__(self, in_name, in_default, set_value=""):
@@ -486,47 +488,46 @@ class builder(object):
         diff=endTime - startTime 
         print "Build elapsed time:", diff
     def push(self):
-        # try:
-        tdeS.ServerAPI.initialize()
-        conn=tdeS.ServerConnection()
-        password=decodeWord(self.tde_settings_ins.server_password)
-        # conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, "nekkianalytics")
-        conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, self.tde_settings_ins.site)
-        conn.publishExtract(self.tde_settings_ins.tde_file,self.tde_settings_ins.project,os.path.basename(self.tde_settings_ins.tde_file),True)
-        conn.close()
-        tdeS.ServerAPI.cleanup()
-        print "Uploaded to server:",self.tde_settings_ins.server_address
-            
-        # except tdeE.TableauException, e:
-        #     # Handle the exception depending on the type of exception received
-#
-        #     errorMessage = "Error: "
-#
-        #     if e.errorCode == tde.Result.INTERNAL_ERROR:
-        #         errorMessage += "INTERNAL_ERROR - Could not parse the response from the server."
-#
-        #     elif e.errorCode == tde.Result.INVALID_ARGUMENT:
-        #         errorMessage += "INVALID_ARGUMENT - " + e.message
-#
-        #     elif e.errorCode == tde.Result.CURL_ERROR:
-        #         errorMessage += "CURL_ERROR - " + e.message
-#
-        #     elif e.errorCode == tde.Result.SERVER_ERROR:
-        #         errorMessage += "SERVER_ERROR - " + e.message
-#
-        #     elif e.errorCode == tde.Result.NOT_AUTHENTICATED:
-        #         errorMessage += "NOT_AUTHENTICATED - " + e.message
-#
-        #     elif e.errorCode == tde.Result.BAD_PAYLOAD:
-        #         errorMessage += "BAD_PAYLOAD - Unknown response from the server. Make sure this version of Tableau API is compatible with your server."
-#
-        #     elif e.errorCode == tde.Result.INIT_ERROR:
-        #         errorMessage += "INIT_ERROR - " + e.message
-#
-        #     else:
-        #         errorMessage += "An unknown error occured."
-#
-        #     print errorMessage
+        password = decodeWord(self.tde_settings_ins.server_password)
+        ds_name = os.path.basename(self.tde_settings_ins.tde_file).split(".")[0]
+        try:
+            tdeS.ServerAPI.initialize()
+            conn=tdeS.ServerConnection()
+            conn.connect(self.tde_settings_ins.server_address,self.tde_settings_ins.server_login,password, self.tde_settings_ins.site)
+            conn.publishExtract(self.tde_settings_ins.tde_file,self.tde_settings_ins.project,ds_name,True)
+            conn.close()
+            tdeS.ServerAPI.cleanup()
+            print "Uploaded to server:",self.tde_settings_ins.server_address
+        except tdeE.TableauException, e:
+            # Handle the exception depending on the type of exception received
+            errorMessage = "Error: "
+            if e.errorCode == tde.Result.INTERNAL_ERROR:
+                errorMessage += "INTERNAL_ERROR - Could not parse the response from the server."
+            elif e.errorCode == tde.Result.INVALID_ARGUMENT:
+                errorMessage += "INVALID_ARGUMENT - " + e.message
+            elif e.errorCode == tde.Result.CURL_ERROR:
+                errorMessage += "CURL_ERROR - " + e.message
+            elif e.errorCode == tde.Result.SERVER_ERROR:
+                errorMessage += "SERVER_ERROR - " + e.message
+            elif e.errorCode == tde.Result.NOT_AUTHENTICATED:
+                errorMessage += "NOT_AUTHENTICATED - " + e.message
+            elif e.errorCode == tde.Result.BAD_PAYLOAD:
+                errorMessage += "BAD_PAYLOAD - Unknown response from the server. Make sure this version of Tableau API is compatible with your server."
+            elif e.errorCode == tde.Result.INIT_ERROR:
+                errorMessage += "INIT_ERROR - " + e.message
+            else:
+                errorMessage += "An unknown error occured."
+            print errorMessage
+            print "Rolling back to RestAPI publishing method..."
+            tableau_exporter.publish_tde(
+                ds_name=ds_name,
+                full_local_path=self.tde_settings_ins.tde_file,
+                login=self.tde_settings_ins.server_login,
+                password=password,
+                project_name=self.tde_settings_ins.project,
+                server=self.tde_settings_ins.server_address,
+                site=self.tde_settings_ins.site
+            )
 
 
         

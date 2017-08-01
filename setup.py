@@ -14,7 +14,8 @@ keywords=['tableau'],
 install_requires=[
 'dataextract',
 'tableausdk',
-'pyodbc'
+'pyodbc',
+'tableau_tools'
 ],
 zip_safe=False,
 include_package_data=True
